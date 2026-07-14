@@ -2,21 +2,6 @@ import Foundation
 
 let programName = "stay-awake"
 let defaultDuration = "1h"
-let nudgeInterval: TimeInterval = 120
-
-var stopRequested: sig_atomic_t = 0
-
-func handleStop(_ signal: Int32) {
-    stopRequested = 1
-}
-
-func writeCountdown(_ remaining: TimeInterval) {
-    let total = max(0, Int(remaining))
-    print(String(format: "\ractive - %02d:%02d:%02d remaining ",
-                 total / 3600, (total % 3600) / 60, total % 60),
-          terminator: "")
-    fflush(stdout)
-}
 
 struct Duration {
     let seconds: Double
@@ -64,24 +49,4 @@ guard keeper.preventSleep() else {
     fail("could not acquire a sleep-prevention assertion")
 }
 
-print("staying awake for \(duration.label). press ctrl-c to stop.")
-
-signal(SIGINT, handleStop)
-signal(SIGTERM, handleStop)
-
-let deadline = Date().addingTimeInterval(duration.seconds)
-keeper.nudge()
-var lastNudge = Date()
-
-while stopRequested == 0 && deadline.timeIntervalSinceNow > 0 {
-    if Date().timeIntervalSince(lastNudge) >= nudgeInterval {
-        keeper.nudge()
-        lastNudge = Date()
-    }
-    writeCountdown(deadline.timeIntervalSinceNow)
-    Thread.sleep(forTimeInterval: 1)
-}
-
-print("")
-keeper.releaseSleep()
-print(stopRequested == 0 ? "done." : "stopped.")
+Runner().run(keeper: &keeper, duration: duration)
