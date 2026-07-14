@@ -41,4 +41,14 @@ guard let duration = parseDuration(durationArg) else {
     fail("invalid duration: '\(durationArg)' (use e.g. 90m or 2h)")
 }
 
+guard var keeper = makeKeepAwake() else {
+    fail("no keep-awake backend for this platform yet")
+}
+
+guard keeper.preventSleep() else {
+    fail("could not acquire a sleep-prevention assertion")
+}
+
 print("staying awake for \(duration.label)")
+Thread.sleep(forTimeInterval: duration.seconds)
+keeper.releaseSleep()
