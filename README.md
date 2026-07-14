@@ -1,5 +1,10 @@
 # stay-awake
 
+> [!NOTE]
+> A small, for-fun project for learning cross-platform systems programming in
+> Swift: one codebase, three operating systems, and how each one exposes native
+> APIs to a command-line tool.
+
 Keep a machine awake and marked "active" so presence-based apps (for example
 Microsoft Teams) do not flip to Away or Offline for as long as it runs.
 
