@@ -11,6 +11,8 @@ func makeKeepAwake() -> PlatformKeepAwake? {
     return MacKeepAwake()
 #elseif os(Windows)
     return WindowsKeepAwake()
+#elseif os(Linux)
+    return LinuxKeepAwake()
 #else
     return nil
 #endif
@@ -80,6 +82,44 @@ struct WindowsKeepAwake: PlatformKeepAwake {
 
     mutating func releaseSleep() {
         _ = SetThreadExecutionState(ES_CONTINUOUS)
+    }
+}
+#endif
+
+#if os(Linux)
+import CX11
+
+struct LinuxKeepAwake: PlatformKeepAwake {
+    private var inhibitor: Process?
+
+    mutating func preventSleep() -> Bool {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["systemd-inhibit",
+                             "--what=idle:sleep",
+                             "--why=stay-awake keeping the machine active",
+                             "--mode=block",
+                             "sleep", "infinity"]
+        do {
+            try process.run()
+            inhibitor = process
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    func nudge() {
+        guard let display = XOpenDisplay(nil) else { return }
+        XTestFakeRelativeMotionEvent(display, 1, 0, 0)
+        XTestFakeRelativeMotionEvent(display, -1, 0, 0)
+        XFlush(display)
+        XCloseDisplay(display)
+    }
+
+    mutating func releaseSleep() {
+        inhibitor?.terminate()
+        inhibitor = nil
     }
 }
 #endif
