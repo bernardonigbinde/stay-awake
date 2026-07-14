@@ -15,6 +15,7 @@ func writeCountdown(_ remaining: TimeInterval) {
     print(String(format: "\ractive - %02d:%02d:%02d remaining ",
                  total / 3600, (total % 3600) / 60, total % 60),
           terminator: "")
+    fflush(stdout)
 }
 
 struct Duration {
