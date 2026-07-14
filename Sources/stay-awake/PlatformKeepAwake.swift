@@ -9,6 +9,8 @@ protocol PlatformKeepAwake {
 func makeKeepAwake() -> PlatformKeepAwake? {
 #if os(macOS)
     return MacKeepAwake()
+#elseif os(Windows)
+    return WindowsKeepAwake()
 #else
     return nil
 #endif
@@ -55,6 +57,29 @@ struct MacKeepAwake: PlatformKeepAwake {
             IOPMAssertionRelease(displayAssertion)
             displayAssertion = 0
         }
+    }
+}
+#endif
+
+#if os(Windows)
+import WinSDK
+
+struct WindowsKeepAwake: PlatformKeepAwake {
+    mutating func preventSleep() -> Bool {
+        let flags = ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED
+        return SetThreadExecutionState(flags) != 0
+    }
+
+    func nudge() {
+        var input = INPUT()
+        input.type = DWORD(INPUT_MOUSE)
+        input.mi = MOUSEINPUT(dx: 0, dy: 0, mouseData: 0,
+                              dwFlags: DWORD(MOUSEEVENTF_MOVE), time: 0, dwExtraInfo: 0)
+        SendInput(1, &input, Int32(MemoryLayout<INPUT>.size))
+    }
+
+    mutating func releaseSleep() {
+        _ = SetThreadExecutionState(ES_CONTINUOUS)
     }
 }
 #endif
