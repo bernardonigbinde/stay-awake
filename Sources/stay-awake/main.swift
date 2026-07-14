@@ -1,6 +1,7 @@
 import Foundation
 
 let programName = "stay-awake"
+let version = "0.1.0"
 let defaultDuration = "1h"
 
 struct Duration {
@@ -28,11 +29,18 @@ func printUsage() {
     print("\(programName) - keep this machine awake and active")
     print("usage: \(programName) <duration>")
     print("  duration: <n>h or <n>m, e.g. 2h, 45m (default \(defaultDuration))")
+    print("  -v, --version   print version")
+    print("  -h, --help      print this help")
 }
 
 let arguments = CommandLine.arguments
 if arguments.contains("-h") || arguments.contains("--help") {
     printUsage()
+    exit(0)
+}
+
+if arguments.contains("-v") || arguments.contains("--version") {
+    print("\(programName) \(version)")
     exit(0)
 }
 
