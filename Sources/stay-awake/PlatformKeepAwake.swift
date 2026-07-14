@@ -103,10 +103,21 @@ struct LinuxKeepAwake: PlatformKeepAwake {
         do {
             try process.run()
             inhibitor = process
+            warnIfNoIdleReset()
             return true
         } catch {
             return false
         }
+    }
+
+    private func warnIfNoIdleReset() {
+        let env = ProcessInfo.processInfo.environment
+        let onWayland = env["XDG_SESSION_TYPE"] == "wayland" || env["WAYLAND_DISPLAY"] != nil
+        let noDisplay = (env["DISPLAY"] ?? "").isEmpty
+        guard onWayland || noDisplay else { return }
+        let note = "warning: no X11 session, so the presence nudge is off. " +
+                   "sleep is still blocked via systemd-inhibit.\n"
+        FileHandle.standardError.write(Data(note.utf8))
     }
 
     func nudge() {
