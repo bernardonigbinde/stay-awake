@@ -50,5 +50,6 @@ guard keeper.preventSleep() else {
 }
 
 print("staying awake for \(duration.label)")
+keeper.nudge()
 Thread.sleep(forTimeInterval: duration.seconds)
 keeper.releaseSleep()

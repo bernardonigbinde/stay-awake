@@ -2,6 +2,7 @@ import Foundation
 
 protocol PlatformKeepAwake {
     mutating func preventSleep() -> Bool
+    func nudge()
     mutating func releaseSleep()
 }
 
@@ -15,6 +16,7 @@ func makeKeepAwake() -> PlatformKeepAwake? {
 
 #if os(macOS)
 import IOKit.pwr_mgt
+import CoreGraphics
 
 struct MacKeepAwake: PlatformKeepAwake {
     private var systemAssertion: IOPMAssertionID = 0
@@ -33,6 +35,15 @@ struct MacKeepAwake: PlatformKeepAwake {
             reason,
             &displayAssertion) == kIOReturnSuccess
         return system || display
+    }
+
+    func nudge() {
+        guard let current = CGEvent(source: nil)?.location else { return }
+        let shifted = CGPoint(x: current.x + 1, y: current.y)
+        CGEvent(mouseEventSource: nil, mouseType: .mouseMoved,
+                mouseCursorPosition: shifted, mouseButton: .left)?.post(tap: .cghidEventTap)
+        CGEvent(mouseEventSource: nil, mouseType: .mouseMoved,
+                mouseCursorPosition: current, mouseButton: .left)?.post(tap: .cghidEventTap)
     }
 
     mutating func releaseSleep() {
